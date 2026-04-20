@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════
+   JJK TOKENS — Cursed Energy Palette
+═══════════════════════════════════════════════════ */
+:root {
+  --bg:         #07050f;
+  --s1:         #0d0a1a;
+  --s2:         #120f22;
+  --s3:         #181430;
+  --border:     rgba(139,92,246,0.14);
+  --border-hi:  rgba(139,92,246,0.4);
+
+  /* JJK signature colors */
+  --purple:     #8b5cf6;
+  --purple-dim: rgba(139,92,246,0.12);
+  --blue:       #3b82f6;
+  --blue-dim:   rgba(59,130,246,0.12);
+  --red:        #ef4444;
+  --red-dim:    rgba(239,68,68,0.1);
+  --gold:       #f59e0b;
+  --gold-dim:   rgba(245,158,11,0.1);
+  --white:      #e2d9f3;
+  --dim:        #5a4f7a;
+  --mid:        #9080b4;
+
+  --groq-c:     #8b5cf6;
+  --gemini-c:   #3b82f6;
+  --phi3-c:     #ef4444;
+  --tiny-c:     #f59e0b;
+
+  --r: 12px;
+  --sb: 275px;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+textarea{resize:none;border:none;outline:none;font-family:inherit}
+
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg);
+  color: var(--white);
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ── Cursed energy background ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 80% 10%, rgba(139,92,246,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 10% 80%, rgba(239,68,68,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 30% at 50% 50%, rgba(59,130,246,0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Hex grid overlay */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(139,92,246,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139,92,246,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════════════ */
+#sidebar {
+  width: var(--sb); min-width: var(--sb);
+  background: var(--s1);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: relative; z-index: 10;
+}
+
+/* Logo */
+.logo-area {
+  padding: 22px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.logo-area::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--red), var(--purple), var(--blue));
+}
+.logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  letter-spacing: 0.15em;
+  background: linear-gradient(135deg, #ef4444 0%, #8b5cf6 50%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+.logo-sub {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: var(--dim);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Online/offline badge */
+.net-badge {
+  margin: 12px 14px 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; letter-spacing: 0.1em;
+  transition: all .3s;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+}
+.net-badge.online {
+  background: rgba(139,92,246,0.12);
+  border: 1px solid rgba(139,92,246,0.3);
+  color: var(--purple);
+}
+.net-badge.offline {
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.3);
+  color: var(--gold);
+}
+.net-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.online .net-dot { background: var(--purple); box-shadow: 0 0 8px var(--purple); animation: netPulse 2s infinite; }
+.offline .net-dot { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+@keyframes netPulse {
+  0%,100%{box-shadow:0 0 8px var(--purple)}
+  50%{box-shadow:0 0 16px rgba(139,92,246,0.6)}
+}
+
+/* Model selector */
+.sec-lbl {
+  font-size: 9px; letter-spacing: 0.22em; color: var(--dim);
+  padding: 10px 20px 6px;
+  font-family: 'Rajdhani', sans-serif; font-weight: 600;
+}
+
+.model-grid {
+  padding: 0 12px 8px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.model-btn {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--mid);
+  transition: all .2s;
+  display: flex; flex-direction: column; gap: 2px;
+  text-align: left;
+}
+.model-btn:hover { border-color: var(--border-hi); color: var(--white); }
+.model-btn.active { color: var(--white); }
+.model-btn.active.groq { background: var(--purple-dim); border-color: rgba(139,92,246,0.4); }
+.model-btn.active.gemini { background: var(--blue-dim); border-color: rgba(59,130,246,0.4); }
+.model-btn.active.phi3 { background: var(--red-dim); border-color: rgba(239,68,68,0.35); }
+.model-btn.active.tinyllama { background: var(--gold-dim); border-color: rgba(245,158,11,0.35); }
+
+.model-name { font-size: 12px; font-weight: 700; }
+.model-tag-s {
+  font-size: 8.5px; letter-spacing: 0.08em; font-weight: 400;
+  font-family: 'JetBrains Mono', monospace;
+}
+.model-btn.groq .model-name { color: var(--purple); }
+.model-btn.gemini .model-name { color: var(--blue); }
+.model-btn.phi3 .model-name { color: var(--red); }
+.model-btn.tinyllama .model-name { color: var(--gold); }
+.model-btn .offline-only {
+  font-size: 7.5px; color: var(--gold);
+  display: none; letter-spacing: 0.06em;
+}
+
+/* New chat */
+#newChatBtn {
+  margin: 8px 12px;
+  padding: 9px 14px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(59,130,246,0.08));
+  border: 1px solid var(--border-hi);
+  border-radius: 9px;
+  color: var(--white);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px; font-weight: 600; letter-spacing: 0.1em;
+  display: flex; align-items: center; gap: 8px;
+  transition: all .2s;
+}
+#newChatBtn:hover {
+  background: linear-gradient(135deg, rgba(139,92,246,0.25), rgba(59,130,246,0.15));
+  box-shadow: 0 0 16px rgba(139,92,246,0.2);
+  transform: translateY(-1px);
+}
+
+.sec-lbl2 {
+  font-size: 9px; letter-spacing: 0.22em; color: var(--dim);
+  padding: 6px 20px 4px;
+  font-family: 'Rajdhani', sans-serif; font-weight: 600;
+}
+
+#convList {
+  flex: 1; overflow-y: auto; padding: 4px 10px;
+}
+#convList::-webkit-scrollbar { width: 3px; }
+#convList::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+
+.conv-item {
+  padding: 8px 12px; border-radius: 7px;
+  font-size: 11px; color: var(--dim);
+  transition: all .15s; margin-bottom: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border: 1px solid transparent; cursor: pointer;
+}
+.conv-item:hover { background: var(--s2); border-color: var(--border); color: var(--white); }
+
+/* Sidebar footer */
+.sb-foot {
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  font-size: 9.5px; color: var(--dim);
+  font-family: 'JetBrains Mono', monospace; line-height: 1.7;
+}
+
+/* ═══════════════════════════════════════════════════
+   MAIN PANEL
+═══════════════════════════════════════════════════ */
+#main {
+  flex: 1; display: flex; flex-direction: column;
+  position: relative; z-index: 5; overflow: hidden; min-width: 0;
+}
+
+/* Topbar */
+.topbar {
+  padding: 14px 26px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(7,5,15,0.88);
+  backdrop-filter: blur(16px);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+  position: relative;
+}
+.topbar::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--purple), var(--blue), transparent);
+  opacity: 0.4;
+}
+.topbar-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px; letter-spacing: 0.15em;
+  background: linear-gradient(90deg, var(--red), var(--purple), var(--blue));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+/* Search toggle */
+.search-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 16px;
+  border: 1px solid var(--border);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+  color: var(--dim); transition: all .2s; background: transparent;
+}
+.search-pill.on {
+  background: rgba(139,92,246,0.12);
+  border-color: rgba(139,92,246,0.4);
+  color: var(--purple);
+  box-shadow: 0 0 10px rgba(139,92,246,0.15);
+}
+.sp-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; box-shadow: 0 0 5px currentColor; }
+
+/* Active model badge */
+.active-model-pill {
+  padding: 5px 14px; border-radius: 16px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+}
+.amp-groq    { background: var(--purple-dim); border: 1px solid rgba(139,92,246,0.35); color: var(--purple); }
+.amp-gemini  { background: var(--blue-dim);   border: 1px solid rgba(59,130,246,0.35);  color: var(--blue); }
+.amp-phi3    { background: var(--red-dim);    border: 1px solid rgba(239,68,68,0.3);    color: var(--red); }
+.amp-tiny    { background: var(--gold-dim);   border: 1px solid rgba(245,158,11,0.3);   color: var(--gold); }
+
+/* ═══════════════════════════════════════════════════
+   CHAT AREA
+═══════════════════════════════════════════════════ */
+#chatBox {
+  flex: 1; overflow-y: auto;
+  padding: 24px 26px 10px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+#chatBox::-webkit-scrollbar { width: 4px; }
+#chatBox::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Welcome */
+#welcome {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; flex: 1; gap: 20px;
+  padding: 48px 32px;
+  animation: fadeUp .55s ease both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.w-sigil {
+  width: 100px; height: 100px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.w-sigil::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(var(--red), var(--purple), var(--blue), var(--red));
+  animation: sigilSpin 4s linear infinite;
+  opacity: 0.4;
+}
+.w-sigil::after {
+  content: '';
+  position: absolute; inset: 4px;
+  border-radius: 50%;
+  background: var(--bg);
+}
+.w-sigil-inner {
+  position: relative; z-index: 1;
+  font-size: 38px;
+  filter: drop-shadow(0 0 16px rgba(139,92,246,0.6));
+}
+@keyframes sigilSpin { to { transform: rotate(360deg); } }
+
+.w-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 42px; letter-spacing: 0.15em;
+  background: linear-gradient(135deg, #ef4444, #8b5cf6, #3b82f6);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  line-height: 1;
+}
+.w-sub {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px; color: var(--mid);
+  line-height: 1.8; max-width: 450px;
+}
+.w-sub strong { color: var(--purple); }
+
+.chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: center; margin-top: 4px;
+}
+.chip {
+  padding: 6px 14px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  font-size: 11px; color: var(--mid);
+  transition: all .2s;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 500; letter-spacing: 0.05em;
+}
+.chip:hover {
+  border-color: var(--purple);
+  color: var(--purple);
+  background: var(--purple-dim);
+  box-shadow: 0 0 10px rgba(139,92,246,0.15);
+}
+
+/* ── Message Rows ── */
+.msg-row {
+  display: flex; gap: 12px;
+  align-items: flex-start;
+  animation: fadeUp .25s ease both;
+}
+.msg-row.user { flex-direction: row-reverse; }
+
+.av {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  flex-shrink: 0;
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 0.05em;
+}
+.av.u {
+  background: linear-gradient(135deg, #4c1d95, #7c3aed);
+  box-shadow: 0 0 12px rgba(139,92,246,0.4);
+  color: white; font-size: 13px;
+}
+.av.b {
+  background: var(--s2);
+  border: 1px solid var(--border-hi);
+  color: var(--purple);
+  font-size: 14px;
+}
+
+.msg-col {
+  max-width: 720px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.msg-row.user .msg-col { align-items: flex-end; }
+
+.bubble {
+  padding: 12px 16px;
+  border-radius: var(--r);
+  font-size: 13.5px; line-height: 1.75;
+  white-space: pre-wrap; word-break: break-word;
+  font-family: 'JetBrains Mono', monospace;
+}
+.bubble.u {
+  background: linear-gradient(135deg, rgba(139,92,246,0.16), rgba(59,130,246,0.08));
+  border: 1px solid rgba(139,92,246,0.28);
+  border-radius: var(--r) 3px var(--r) var(--r);
+}
+.bubble.b {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 3px var(--r) var(--r) var(--r);
+}
+.bubble.err {
+  background: rgba(239,68,68,0.07);
+  border-color: rgba(239,68,68,0.3);
+  color: #fca5a5;
+}
+
+/* Image preview in bubble */
+.attached-img {
+  max-width: 280px; max-height: 200px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* File chip */
+.file-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 8px;
+  font-size: 10px; color: var(--gold);
+  margin-bottom: 8px;
+  font-family: 'Rajdhani', sans-serif; font-weight: 600;
+}
+
+/* Search badge */
+.search-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 9.5px;
+  font-family: 'Rajdhani', sans-serif; font-weight: 600;
+  color: var(--purple);
+  background: var(--purple-dim);
+  border: 1px solid rgba(139,92,246,0.25);
+  border-radius: 10px; padding: 2px 9px;
+  margin-bottom: 8px; letter-spacing: 0.06em;
+}
+
+/* Model chip on response */
+.model-chip {
+  font-size: 9px;
+  font-family: 'Rajdhani', sans-serif; font-weight: 700;
+  padding: 2px 8px; border-radius: 8px; letter-spacing: 0.08em;
+}
+.mc-groq    { background: var(--purple-dim); border: 1px solid rgba(139,92,246,0.25); color: var(--purple); }
+.mc-gemini  { background: var(--blue-dim);   border: 1px solid rgba(59,130,246,0.25);  color: var(--blue); }
+.mc-phi3    { background: var(--red-dim);    border: 1px solid rgba(239,68,68,0.22);   color: var(--red); }
+.mc-tiny    { background: var(--gold-dim);   border: 1px solid rgba(245,158,11,0.22);  color: var(--gold); }
+.mc-fallback{ background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: var(--gold); }
+
+.bfoot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.msg-row.user .bfoot { justify-content: flex-end; }
+.btime { font-size: 9.5px; color: var(--dim); letter-spacing: 0.04em; }
+
+.copy-btn {
+  font-size: 9.5px; color: var(--dim);
+  padding: 2px 8px;
+  border: 1px solid var(--border); border-radius: 5px;
+  transition: all .15s; background: transparent;
+  font-family: 'Rajdhani', sans-serif; font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.copy-btn:hover { border-color: var(--purple); color: var(--purple); }
+
+/* Thinking */
+.think-bub { display: flex; align-items: center; gap: 10px; }
+.think-lbl {
+  font-size: 11px; color: var(--dim);
+  letter-spacing: 0.14em;
+  font-family: 'Rajdhani', sans-serif; font-weight: 600;
+}
+.dots { display: flex; gap: 4px; }
+.dots span {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--purple); box-shadow: 0 0 5px var(--purple);
+  animation: db 1.1s infinite;
+}
+.dots span:nth-child(2) { animation-delay: .18s; }
+.dots span:nth-child(3) { animation-delay: .36s; }
+@keyframes db {
+  0%,80%,100% { opacity:.15; transform:scale(.7); }
+  40%          { opacity:1;   transform:scale(1); }
+}
+
+/* Caret */
+.caret {
+  display: inline-block; width: 2px; height: 13px;
+  background: var(--purple); margin-left: 2px;
+  vertical-align: text-bottom; border-radius: 1px;
+  animation: cb 1s step-end infinite;
+}
+@keyframes cb { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ═══════════════════════════════════════════════════
+   INPUT AREA
+═══════════════════════════════════════════════════ */
+#inputArea {
+  padding: 14px 26px 22px;
+  background: rgba(7,5,15,0.92);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* File preview strip */
+#filePreview {
+  display: none;
+  align-items: center; gap: 10px;
+  padding: 8px 12px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 9px 9px 0 0;
+  border-bottom: none;
+  font-size: 11px;
+}
+#filePreview.show { display: flex; }
+#filePreviewThumb {
+  width: 36px; height: 36px;
+  border-radius: 6px; object-fit: cover;
+  border: 1px solid var(--border);
+  display: none;
+}
+#filePreviewName { color: var(--gold); font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 12px; }
+#filePreviewSize { color: var(--dim); font-size: 10px; }
+#clearFile {
+  margin-left: auto;
+  color: var(--dim); font-size: 16px; line-height: 1;
+  transition: color .15s;
+}
+#clearFile:hover { color: var(--red); }
+
+.input-shell {
+  display: flex; align-items: flex-end; gap: 10px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 13px;
+  transition: border-color .2s, box-shadow .2s;
+}
+#filePreview.show + .input-shell {
+  border-radius: 0 0 var(--r) var(--r);
+}
+.input-shell:focus-within {
+  border-color: var(--border-hi);
+  box-shadow: 0 0 18px rgba(139,92,246,0.12);
+}
+
+#msgInput {
+  flex: 1; background: transparent;
+  color: var(--white);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13.5px; line-height: 1.6;
+  height: 22px; max-height: 140px;
+  overflow-y: auto;
+}
+#msgInput::placeholder { color: var(--dim); }
+#msgInput::-webkit-scrollbar { width: 3px; }
+#msgInput::-webkit-scrollbar-thumb { background: var(--border); }
+
+.iact { display: flex; align-items: center; gap: 7px; }
+
+.icon-btn {
+  width: 34px; height: 34px;
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; transition: all .2s; background: transparent;
+}
+.icon-btn:hover { border-color: var(--border-hi); color: var(--white); }
+.icon-btn.rec {
+  border-color: var(--red); color: var(--red);
+  box-shadow: 0 0 10px rgba(239,68,68,0.3);
+  animation: recPulse .75s ease-in-out infinite;
+}
+@keyframes recPulse {
+  0%,100%{box-shadow:0 0 10px rgba(239,68,68,0.3)}
+  50%{box-shadow:0 0 22px rgba(239,68,68,0.55)}
+}
+
+#sendBtn {
+  height: 34px; padding: 0 18px;
+  background: linear-gradient(135deg, #6d28d9, #4f46e5);
+  border-radius: 8px; color: #fff;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.1em;
+  transition: box-shadow .2s, transform .15s;
+  white-space: nowrap;
+}
+#sendBtn:hover { box-shadow: 0 0 20px rgba(139,92,246,0.5); transform: translateY(-1px); }
+#sendBtn:active { transform: translateY(0); }
+#sendBtn:disabled { opacity: .4; pointer-events: none; }
+
+.input-foot {
+  display: flex; justify-content: space-between;
+  margin-top: 8px; padding: 0 3px;
+  font-size: 9.5px; color: var(--dim);
+  letter-spacing: 0.05em;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Hidden file input */
+#fileInput { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══════════════════════════════════════════ -->
+<div id="sidebar">
+  <div class="logo-area">
+    <div class="logo">APEX</div>
+    <div class="logo-sub">// MULTI-MODEL HYBRID AI SYSTEM</div>
+  </div>
+
+  <div class="net-badge offline" id="netBadge">
+    <div class="net-dot"></div>
+    <span id="netText">CHECKING...</span>
+  </div>
+
+  <div class="sec-lbl">// SELECT MODEL</div>
+  <div class="model-grid">
+    <button class="model-btn groq" data-model="groq" onclick="selectModel('groq')">
+      <span class="model-name">GROQ</span>
+      <span class="model-tag-s">Llama 3.3 70B</span>
+      <span class="model-tag-s" style="color:var(--purple);font-size:7.5px">☁ ONLINE ONLY</span>
+    </button>
+    <button class="model-btn gemini" data-model="gemini" onclick="selectModel('gemini')">
+      <span class="model-name">GEMINI</span>
+      <span class="model-tag-s">Flash 1.5</span>
+      <span class="model-tag-s" style="color:var(--blue);font-size:7.5px">☁ ONLINE ONLY</span>
+    </button>
+    <button class="model-btn phi3" data-model="phi3" onclick="selectModel('phi3')">
+      <span class="model-name">PHI-3</span>
+      <span class="model-tag-s">Ollama Local</span>
+      <span class="model-tag-s" style="color:var(--red);font-size:7.5px">🖥 OFFLINE OK</span>
+    </button>
+    <button class="model-btn tinyllama" data-model="tinyllama" onclick="selectModel('tinyllama')">
+      <span class="model-name">TINYLLAMA</span>
+      <span class="model-tag-s">Ollama Local</span>
+      <span class="model-tag-s" style="color:var(--gold);font-size:7.5px">🖥 OFFLINE OK</span>
+    </button>
+  </div>
+
+  <button id="newChatBtn">⊕ NEW SESSION</button>
+
+  <div class="sec-lbl2">// SESSIONS</div>
+  <div id="convList"></div>
+
+  <div class="sb-foot">
+    <span id="sbModel">Model: GROQ</span>
+    <span id="sbSessions">Sessions: 0</span>
+    <span>Port: 8000</span>
+  </div>
+</div>
+
+<!-- ═══ MAIN ═══════════════════════════════════════════════ -->
+<div id="main">
+  <div class="topbar">
+    <div class="topbar-title">APEX AI</div>
+    <div class="topbar-right">
+      <button class="search-pill" id="searchPill">
+        <span class="sp-dot"></span>
+        <span id="searchLabel">WEB SEARCH: OFF</span>
+      </button>
+      <div class="active-model-pill amp-groq" id="activeModelPill">GROQ</div>
+    </div>
+  </div>
+
+  <div id="chatBox">
+    <div id="welcome">
+      <div class="w-sigil"><div class="w-sigil-inner">⚔️</div></div>
+      <div class="w-title">APEX AI</div>
+      <div class="w-sub">
+        4 models. Online &amp; offline. One interface.<br>
+        Switch between <strong>Groq · Gemini · Phi-3 · TinyLlama</strong> freely.<br>
+        Upload files, search the web, use your voice.
+      </div>
+      <div class="chips">
+        <button class="chip" onclick="setQ('Explain Jujutsu Kaisen cursed energy system')">⚡ Cursed Energy</button>
+        <button class="chip" onclick="setQ('Write a Python FastAPI endpoint with file upload')">🐍 FastAPI code</button>
+        <button class="chip" onclick="setQ('What are the latest AI developments this week?')">🌐 AI news</button>
+        <button class="chip" onclick="setQ('Compare phi3 vs tinyllama models')">🤖 Model compare</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="inputArea">
+    <!-- File preview -->
+    <div id="filePreview">
+      <img id="filePreviewThumb" alt="preview">
+      <div>
+        <div id="filePreviewName">—</div>
+        <div id="filePreviewSize">—</div>
+      </div>
+      <button id="clearFile" onclick="clearFileAttach()">✕</button>
+    </div>
+
+    <div class="input-shell">
+      <textarea id="msgInput" placeholder="Message APEX..." rows="1"></textarea>
+      <div class="iact">
+        <input type="file" id="fileInput" accept="image/*,.txt,.md,.py,.js,.html,.css,.json,.csv">
+        <button class="icon-btn" id="fileBtn" title="Attach file/image" onclick="document.getElementById('fileInput').click()">📎</button>
+        <button class="icon-btn" id="voiceBtn" title="Voice input">🎤</button>
+        <button id="sendBtn">SEND ↑</button>
+      </div>
+    </div>
+    <div class="input-foot">
+      <span>↵ Send &nbsp;·&nbsp; Shift+↵ New line &nbsp;·&nbsp; 📎 Files &amp; Images</span>
+      <span id="charCount">0</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══ ELEMENTS ════════════════════════════════════════════ */
+const chatBox     = document.getElementById('chatBox');
+const msgInput    = document.getElementById('msgInput');
+const sendBtn     = document.getElementById('sendBtn');
+const voiceBtn    = document.getElementById('voiceBtn');
+const charCount   = document.getElementById('charCount');
+const welcome     = document.getElementById('welcome');
+const convList    = document.getElementById('convList');
+const netBadge    = document.getElementById('netBadge');
+const netText     = document.getElementById('netText');
+const searchPill  = document.getElementById('searchPill');
+const searchLabel = document.getElementById('searchLabel');
+const activeModelPill = document.getElementById('activeModelPill');
+const fileInput   = document.getElementById('fileInput');
+const filePreview = document.getElementById('filePreview');
+const filePreviewThumb = document.getElementById('filePreviewThumb');
+const filePreviewName  = document.getElementById('filePreviewName');
+const filePreviewSize  = document.getElementById('filePreviewSize');
+
+/* ═══ STATE ═══════════════════════════════════════════════ */
+let sessions    = JSON.parse(localStorage.getItem('apex_sessions') || '[]');
+let sessionId   = crypto.randomUUID();
+let busy        = false;
+let searchOn    = false;
+let selectedModel = 'groq';
+let attachedFile  = null;
+let isOnline      = false;
+
+/* ═══ MODEL SELECTION ══════════════════════════════════════ */
+const MODEL_META = {
+  groq:      { label: 'GROQ',      cls: 'amp-groq',   chipCls: 'mc-groq',   onlineOnly: true  },
+  gemini:    { label: 'GEMINI',    cls: 'amp-gemini',  chipCls: 'mc-gemini', onlineOnly: true  },
+  phi3:      { label: 'PHI-3',     cls: 'amp-phi3',    chipCls: 'mc-phi3',   onlineOnly: false },
+  tinyllama: { label: 'TINYLLAMA', cls: 'amp-tiny',    chipCls: 'mc-tiny',   onlineOnly: false },
+};
+
+function selectModel(m) {
+  selectedModel = m;
+  // Update sidebar buttons
+  document.querySelectorAll('.model-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.model === m);
+  });
+  // Update top pill
+  const meta = MODEL_META[m];
+  activeModelPill.className = 'active-model-pill ' + meta.cls;
+  activeModelPill.textContent = meta.label;
+  document.getElementById('sbModel').textContent = 'Model: ' + meta.label;
+}
+// Set default
+selectModel('groq');
+document.querySelector('[data-model="groq"]').classList.add('active');
+
+/* ═══ STATUS POLLING ═══════════════════════════════════════ */
+async function pollStatus() {
+  try {
+    const r = await fetch('/status');
+    const d = await r.json();
+    isOnline = d.online;
+    netBadge.className = 'net-badge ' + (isOnline ? 'online' : 'offline');
+    netText.textContent = isOnline ? 'ONLINE · CURSED NETWORK' : 'OFFLINE · LOCAL MODE';
+    // Grey out online-only models when offline
+    document.querySelectorAll('.model-btn').forEach(b => {
+      const meta = MODEL_META[b.dataset.model];
+      if (meta.onlineOnly && !isOnline) {
+        b.style.opacity = '0.4';
+        b.title = 'Requires internet';
+      } else {
+        b.style.opacity = '1';
+        b.title = '';
+      }
+    });
+    // Auto-switch if selected model needs internet but we're offline
+    if (!isOnline && MODEL_META[selectedModel].onlineOnly) {
+      selectModel('phi3');
+      document.querySelector('[data-model="phi3"]').classList.add('active');
+    }
+  } catch { isOnline = false; }
+}
+pollStatus();
+setInterval(pollStatus, 12000);
+
+/* ═══ SEARCH TOGGLE ═══════════════════════════════════════ */
+searchPill.onclick = () => {
+  searchOn = !searchOn;
+  searchPill.classList.toggle('on', searchOn);
+  searchLabel.textContent = 'WEB SEARCH: ' + (searchOn ? 'ON' : 'OFF');
+};
+
+/* ═══ FILE ATTACH ══════════════════════════════════════════ */
+fileInput.addEventListener('change', () => {
+  const f = fileInput.files[0];
+  if (!f) return;
+  attachedFile = f;
+  filePreviewName.textContent = f.name;
+  filePreviewSize.textContent = formatBytes(f.size);
+
+  if (f.type.startsWith('image/')) {
+    const url = URL.createObjectURL(f);
+    filePreviewThumb.src = url;
+    filePreviewThumb.style.display = 'block';
+  } else {
+    filePreviewThumb.style.display = 'none';
+  }
+  filePreview.classList.add('show');
+});
+
+function clearFileAttach() {
+  attachedFile = null;
+  fileInput.value = '';
+  filePreviewThumb.src = '';
+  filePreviewThumb.style.display = 'none';
+  filePreview.classList.remove('show');
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+  return (b / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+/* ═══ INPUT ═══════════════════════════════════════════════ */
+msgInput.addEventListener('input', () => {
+  charCount.textContent = msgInput.value.length + ' chars';
+  grow();
+});
+msgInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+function grow() {
+  msgInput.style.height = '22px';
+  msgInput.style.height = Math.min(msgInput.scrollHeight, 140) + 'px';
+}
+function setQ(t) {
+  msgInput.value = t; msgInput.focus();
+  charCount.textContent = t.length + ' chars'; grow();
+}
+
+/* ═══ NEW SESSION ══════════════════════════════════════════ */
+document.getElementById('newChatBtn').onclick = () => {
+  sessionId = crypto.randomUUID();
+  chatBox.innerHTML = ''; chatBox.appendChild(welcome);
+  welcome.style.display = 'flex';
+  msgInput.value = ''; charCount.textContent = '0 chars'; grow();
+  clearFileAttach();
+};
+
+/* ═══ SEND ════════════════════════════════════════════════ */
+async function send() {
+  const txt = msgInput.value.trim();
+  if ((!txt && !attachedFile) || busy) return;
+
+  if (welcome.parentElement) welcome.remove();
+
+  // Show user message with optional file preview
+  addUserMsg(txt, attachedFile);
+
+  // Build FormData
+  const fd = new FormData();
+  fd.append('message', txt || '(file attached)');
+  fd.append('session_id', sessionId);
+  fd.append('model', selectedModel);
+  fd.append('use_search', searchOn ? 'true' : 'false');
+  if (attachedFile) fd.append('file', attachedFile);
+
+  msgInput.value = ''; grow(); charCount.textContent = '0 chars';
+  clearFileAttach();
+  busy = true; sendBtn.disabled = true;
+
+  const thinkEl = addThink();
+
+  try {
+    const res = await fetch('/chat', { method: 'POST', body: fd });
+    const data = await res.json();
+    thinkEl.remove();
+
+    if (data.reply) {
+      addBotMsg(data.reply, data.model, data.searched);
+      saveSession(txt || '(file)');
+    } else if (data.error) {
+      addBotMsg('⚠ ' + data.error, null, false, true);
+    }
+  } catch (e) {
+    thinkEl.remove();
+    addBotMsg('⚠ Cannot reach server. Is uvicorn running on port 8000?', null, false, true);
+  }
+
+  busy = false; sendBtn.disabled = false; msgInput.focus();
+}
+sendBtn.onclick = send;
+
+/* ═══ USER MESSAGE ═════════════════════════════════════════ */
+function addUserMsg(text, file) {
+  const row = mk('div', 'msg-row user');
+  const av  = mk('div', 'av u'); av.textContent = 'R';
+  const col = mk('div', 'msg-col');
+  const bub = mk('div', 'bubble u');
+
+  if (file) {
+    if (file.type.startsWith('image/')) {
+      const img = mk('img', 'attached-img');
+      img.src = URL.createObjectURL(file);
+      bub.appendChild(img);
+    } else {
+      const fc = mk('div', 'file-chip');
+      fc.innerHTML = '📄 ' + file.name;
+      bub.appendChild(fc);
+    }
+  }
+  if (text) bub.appendChild(document.createTextNode(text));
+
+  const foot = mk('div', 'bfoot');
+  const ts = mk('div', 'btime');
+  ts.textContent = now();
+  foot.appendChild(ts);
+
+  col.appendChild(bub); col.appendChild(foot);
+  row.appendChild(av); row.appendChild(col);
+  chatBox.appendChild(row); scroll();
+}
+
+/* ═══ BOT MESSAGE ══════════════════════════════════════════ */
+function addBotMsg(text, modelUsed, searched, isErr = false) {
+  const row = mk('div', 'msg-row bot');
+  const av  = mk('div', 'av b'); av.textContent = '⚔';
+  const col = mk('div', 'msg-col');
+  const bub = mk('div', 'bubble b' + (isErr ? ' err' : ''));
+
+  if (searched) {
+    const sb = mk('div', 'search-badge');
+    sb.innerHTML = '🌐 Web Searched';
+    bub.appendChild(sb);
+    bub.appendChild(document.createElement('br'));
+  }
+
+  const textSpan = mk('span', '');
+  bub.appendChild(textSpan);
+
+  if (!isErr) typeInto(textSpan, text);
+  else textSpan.textContent = text;
+
+  col.appendChild(bub);
+
+  const foot = mk('div', 'bfoot');
+  const ts = mk('div', 'btime'); ts.textContent = now();
+  foot.appendChild(ts);
+
+  if (modelUsed) {
+    const mc = mk('span', 'model-chip ' + modelChipClass(modelUsed));
+    mc.textContent = modelChipLabel(modelUsed);
+    foot.appendChild(mc);
+  }
+
+  if (!isErr) {
+    const cp = mk('button', 'copy-btn'); cp.textContent = 'COPY';
+    cp.onclick = () => {
+      navigator.clipboard.writeText(text);
+      cp.textContent = 'COPIED ✓';
+      setTimeout(() => { cp.textContent = 'COPY'; }, 2000);
+    };
+    foot.appendChild(cp);
+  }
+
+  col.appendChild(foot);
+  row.appendChild(av); row.appendChild(col);
+  chatBox.appendChild(row); scroll();
+}
+
+/* ═══ THINKING ═════════════════════════════════════════════ */
+function addThink() {
+  const row = mk('div', 'msg-row bot');
+  const av  = mk('div', 'av b'); av.textContent = '⚔';
+  const col = mk('div', 'msg-col');
+  const bub = mk('div', 'bubble b');
+  bub.innerHTML = '<div class="think-bub"><span class="think-lbl">CHANNELING CURSED ENERGY</span><div class="dots"><span></span><span></span><span></span></div></div>';
+  col.appendChild(bub); row.appendChild(av); row.appendChild(col);
+  chatBox.appendChild(row); scroll();
+  return row;
+}
+
+/* ═══ TYPEWRITER ═══════════════════════════════════════════ */
+function typeInto(el, text) {
+  const words = text.split(' ');
+  let i = 0; el.innerHTML = '';
+  const caret = mk('span', 'caret');
+  el.appendChild(caret);
+  const iv = setInterval(() => {
+    if (i < words.length) {
+      caret.insertAdjacentText('beforebegin', (i > 0 ? ' ' : '') + words[i++]);
+      scroll();
+    } else { caret.remove(); clearInterval(iv); }
+  }, 18);
+}
+
+/* ═══ HELPERS ══════════════════════════════════════════════ */
+function modelChipClass(m) {
+  if (m.includes('groq'))      return 'mc-groq';
+  if (m.includes('gemini'))    return 'mc-gemini';
+  if (m.includes('phi3') || m.includes('phi'))    return 'mc-phi3';
+  if (m.includes('tiny'))      return 'mc-tiny';
+  return 'mc-fallback';
+}
+function modelChipLabel(m) {
+  if (m === 'groq')              return '☁ GROQ';
+  if (m === 'gemini')            return '☁ GEMINI';
+  if (m === 'phi3')              return '🖥 PHI-3';
+  if (m === 'tinyllama')         return '🖥 TINYLLAMA';
+  if (m === 'phi3_fallback')     return '⚡ PHI-3 FALLBACK';
+  if (m === 'tinyllama_fallback')return '⚡ TINY FALLBACK';
+  return '🤖 ' + m.toUpperCase();
+}
+function now() {
+  return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+}
+function mk(tag, cls) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls; return e;
+}
+function scroll() { chatBox.scrollTop = chatBox.scrollHeight; }
+
+/* ═══ SESSION HISTORY ══════════════════════════════════════ */
+function saveSession(firstMsg) {
+  if (!sessions.find(s => s.id === sessionId)) {
+    sessions.unshift({
+      id: sessionId,
+      title: firstMsg.substring(0, 46) + (firstMsg.length > 46 ? '…' : '')
+    });
+    if (sessions.length > 25) sessions = sessions.slice(0, 25);
+    localStorage.setItem('apex_sessions', JSON.stringify(sessions));
+    renderSidebar();
+  }
+}
+function renderSidebar() {
+  convList.innerHTML = '';
+  sessions.forEach(s => {
+    const el = mk('div', 'conv-item');
+    el.textContent = s.title;
+    convList.appendChild(el);
+  });
+  document.getElementById('sbSessions').textContent = 'Sessions: ' + sessions.length;
+}
+renderSidebar();
+
+/* ═══ VOICE ════════════════════════════════════════════════ */
+const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SpeechAPI) {
+  const rec = new SpeechAPI();
+  rec.continuous = false; rec.lang = 'en-IN';
+  voiceBtn.onclick = () => { voiceBtn.classList.add('rec'); rec.start(); };
+  rec.onresult = e => {
+    msgInput.value = e.results[0][0].transcript;
+    grow(); charCount.textContent = msgInput.value.length + ' chars';
+    voiceBtn.classList.remove('rec');
+  };
+  rec.onerror = rec.onend = () => voiceBtn.classList.remove('rec');
+} else {
+  voiceBtn.onclick = () => alert('Voice input: Use Chrome or Edge browser.');
+  voiceBtn.style.opacity = '0.4';
+}
+</script>
+</body>
+</html>
